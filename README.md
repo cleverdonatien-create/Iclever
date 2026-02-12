@@ -27,7 +27,7 @@
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
 
         /* Main UI */
-        h1 { color: #d6336c; font-size: 2.2rem; margin-bottom: 10px; padding: 0 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        h1 { color: #d6336c; font-size: 2.2rem; margin-bottom: 10px; padding: 0 20px; }
         #feedback-msg { font-size: 1.2rem; color: #b33939; font-weight: bold; height: 50px; }
 
         .buttons-container { 
@@ -43,8 +43,7 @@
 
         #yesBtn { 
             background: linear-gradient(145deg, #ff4d6d, #c9184a); 
-            color: white; 
-            border: 2px solid #fff;
+            color: white; border: 2px solid #fff;
             animation: pulse-red 2s infinite;
         }
 
@@ -54,11 +53,30 @@
             100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0); }
         }
 
-        #noBtn { 
-            background-color: #7f8c8d; color: white; 
-            position: relative; transition: all 0.15s ease-out; 
+        #noBtn { background-color: #7f8c8d; color: white; position: relative; transition: all 0.15s ease-out; }
+
+        /* Name Entry Popup */
+        #name-popup {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85); z-index: 3000;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .popup-box {
+            background: white; padding: 30px; border-radius: 25px;
+            width: 85%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .popup-box h2 { color: #d6336c; margin-bottom: 20px; font-size: 1.3rem; line-height: 1.4; }
+        .popup-box input {
+            width: 90%; padding: 12px; margin-bottom: 25px;
+            border: 2px solid #ffafbd; border-radius: 12px; font-size: 1.1rem; outline: none;
+        }
+        .popup-box input:focus { border-color: #ff4d6d; }
+        .submit-btn {
+            background: #28a745; color: white; padding: 12px 30px;
+            border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem;
         }
 
+        /* Success Section */
         #success-container {
             display: none; position: fixed; inset: 0;
             background: #fff0f3; flex-direction: column; align-items: center; justify-content: center;
@@ -82,8 +100,17 @@
 <body>
 
     <form id="notifyForm" action="https://formspree.io/f/mojnjgvy" method="POST" style="display:none;">
-        <input type="text" name="update" value="She said YES! ❤️">
+        <input type="text" name="name" id="hiddenNameInput">
+        <input type="text" name="message" value="Officially said YES! ❤️">
     </form>
+
+    <div id="name-popup">
+        <div class="popup-box">
+            <h2>Wait! I need your name for the official Valentine certificate! 📜</h2>
+            <input type="text" id="userName" placeholder="Type your name here...">
+            <button class="submit-btn" id="confirmName">SUBMIT</button>
+        </div>
+    </div>
 
     <div id="warning-screen">
         <div class="big-emoji" id="warnEmoji">👻</div>
@@ -114,37 +141,70 @@
         const feedback = document.getElementById('feedback-msg');
         const success = document.getElementById('success-container');
         const warning = document.getElementById('warning-screen');
-        const warnEmoji = document.getElementById('warnEmoji');
-        const warnText = document.getElementById('warnText');
+        const namePopup = document.getElementById('name-popup');
         const finalMsg = document.getElementById('finalMsg');
         const audio = document.getElementById('bgMusic');
 
         let totalClicks = 0;
         let isRunning = false;
-        const funnyWords = ["Nope! 💨", "Too slow! 🏃‍♀️", "Try again! ✨", "Missed me! 😜", "Wrong button! 🚫"];
 
         function escape(e) {
             if(e) e.preventDefault();
-            
-            if (!isRunning) {
-                noBtn.style.position = 'fixed';
-                isRunning = true;
-            }
-
+            if (!isRunning) { noBtn.style.position = 'fixed'; isRunning = true; }
             totalClicks++;
-
             const newX = Math.random() * (window.innerWidth - 120) + 60;
             const newY = Math.random() * (window.innerHeight - 120) + 60;
             noBtn.style.left = `${newX}px`;
             noBtn.style.top = `${newY}px`;
             noBtn.style.transform = 'translate(-50%, -50%)';
             
+            const funnyWords = ["Nope! 💨", "Too slow! 🏃‍♀️", "Try again! ✨", "Missed me! 😜", "Wrong button! 🚫"];
             feedback.innerText = funnyWords[totalClicks % funnyWords.length];
+            
+            if (totalClicks === 5) triggerWarning("👻", "I'm not joking, click on yes. Stop messing with me");
+            else if (totalClicks === 10) triggerWarning("👮‍♀️", "Illegal maneuver! You are prohibited from clicking NO.");
+            else if (totalClicks === 15) triggerWarning("😉", "Just say yes, make it different now.");
+        }
 
-            if (totalClicks === 5) {
-                triggerWarning("👻", "I'm not joking, click on yes. Stop messing with me");
-            } 
-            else if (totalClicks === 10) {
+        function triggerWarning(emoji, message) {
+            document.getElementById('warnEmoji').innerText = emoji;
+            document.getElementById('warnText').innerText = message;
+            warning.style.display = 'flex';
+            setTimeout(() => { warning.style.display = 'none'; noBtn.style.left = '50%'; noBtn.style.top = '70%'; }, 4000);
+        }
+
+        function startFinalStep() {
+            namePopup.style.display = 'flex';
+        }
+
+        document.getElementById('confirmName').addEventListener('click', () => {
+            const nameValue = document.getElementById('userName').value;
+            if (nameValue.trim() === "") return alert("Please enter your name for the certificate! 😊");
+
+            namePopup.style.display = 'none';
+            document.getElementById('hiddenNameInput').value = nameValue;
+            
+            // Show Success with her name included
+            success.style.display = 'flex';
+            finalMsg.innerText = `💝Clever got you, ${nameValue}! 😄.\n\nThis is the best "yes" ever 💝💖\n\nYou are his valentine now 🥰🥰`;
+            audio.play().catch(() => {});
+
+            // Send Notification to your Email
+            const form = document.getElementById('notifyForm');
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' }
+            });
+        });
+
+        noBtn.addEventListener('touchstart', escape, { passive: false });
+        noBtn.addEventListener('mouseover', escape);
+        yesBtn.addEventListener('click', startFinalStep);
+        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startFinalStep(); });
+    </script>
+</body>
+</html>
                 triggerWarning("👮‍♀️", "Illegal maneuver! \nYou are prohibited from clicking NO.");
             } 
             else if (totalClicks === 15) {
