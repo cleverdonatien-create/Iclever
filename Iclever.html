@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Be My Valentine?</title>
+    <style>
+        body {
+            margin: 0; padding: 0; height: 100dvh;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: linear-gradient(to right, #ffafbd, #ffc3a0);
+            font-family: 'Arial', sans-serif; overflow: hidden; text-align: center;
+            touch-action: manipulation;
+        }
+
+        /* Jumper/Warning Screen */
+        #warning-screen {
+            display: none; position: fixed; inset: 0;
+            background-color: #000; color: white;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 2000;
+        }
+
+        .big-emoji { font-size: 8rem; margin-bottom: 20px; animation: bounce 0.5s infinite alternate; }
+        .warning-text { font-size: 1.5rem; font-weight: bold; padding: 0 20px; line-height: 1.4; }
+
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+
+        /* Main UI */
+        h1 { color: #d6336c; font-size: 2.2rem; margin-bottom: 10px; padding: 0 20px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        #feedback-msg { font-size: 1.2rem; color: #b33939; font-weight: bold; height: 50px; }
+
+        .buttons-container { 
+            display: flex; justify-content: center; align-items: center;
+            gap: 25px; width: 100%; height: 120px; position: relative;
+        }
+
+        button {
+            padding: 16px 40px; font-size: 1.3rem; border: none; border-radius: 50px;
+            cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        #yesBtn { 
+            background: linear-gradient(145deg, #ff4d6d, #c9184a); 
+            color: white; 
+            border: 2px solid #fff;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 77, 109, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0); }
+        }
+
+        #noBtn { 
+            background-color: #7f8c8d; color: white; 
+            position: relative; transition: all 0.15s ease-out; 
+        }
+
+        #success-container {
+            display: none; position: fixed; inset: 0;
+            background: #fff0f3; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+
+        .heart {
+            background-color: #ff4d6d; height: 80px; width: 80px;
+            transform: rotate(-45deg); animation: beat 0.6s infinite alternate; margin-bottom: 40px;
+        }
+        .heart:before, .heart:after {
+            content: ""; background-color: #ff4d6d; border-radius: 50%; height: 80px; width: 80px; position: absolute;
+        }
+        .heart:before { top: -40px; left: 0; }
+        .heart:after { left: 40px; top: 0; }
+
+        @keyframes beat { to { transform: scale(1.2) rotate(-45deg); } }
+        .final-text { font-size: 1.6rem; color: #c9184a; font-weight: bold; white-space: pre-wrap; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <form id="notifyForm" action="https://formspree.io/f/mojnjgvy" method="POST" style="display:none;">
+        <input type="text" name="update" value="She said YES! ❤️">
+    </form>
+
+    <div id="warning-screen">
+        <div class="big-emoji" id="warnEmoji">👻</div>
+        <p class="warning-text" id="warnText"></p>
+    </div>
+
+    <div id="game-ui">
+        <h1>Do you want to be my Valentine?</h1>
+        <p id="feedback-msg">Make your choice! 😉</p>
+        <div class="buttons-container">
+            <button id="yesBtn">YES</button>
+            <button id="noBtn">NO</button>
+        </div>
+    </div>
+
+    <div id="success-container">
+        <div class="heart"></div>
+        <div class="final-text" id="finalMsg"></div>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const feedback = document.getElementById('feedback-msg');
+        const success = document.getElementById('success-container');
+        const warning = document.getElementById('warning-screen');
+        const warnEmoji = document.getElementById('warnEmoji');
+        const warnText = document.getElementById('warnText');
+        const finalMsg = document.getElementById('finalMsg');
+        const audio = document.getElementById('bgMusic');
+
+        let totalClicks = 0;
+        let isRunning = false;
+        const funnyWords = ["Nope! 💨", "Too slow! 🏃‍♀️", "Try again! ✨", "Missed me! 😜", "Wrong button! 🚫"];
+
+        function escape(e) {
+            if(e) e.preventDefault();
+            
+            if (!isRunning) {
+                noBtn.style.position = 'fixed';
+                isRunning = true;
+            }
+
+            totalClicks++;
+
+            const newX = Math.random() * (window.innerWidth - 120) + 60;
+            const newY = Math.random() * (window.innerHeight - 120) + 60;
+            noBtn.style.left = `${newX}px`;
+            noBtn.style.top = `${newY}px`;
+            noBtn.style.transform = 'translate(-50%, -50%)';
+            
+            feedback.innerText = funnyWords[totalClicks % funnyWords.length];
+
+            if (totalClicks === 5) {
+                triggerWarning("👻", "I'm not joking, click on yes. Stop messing with me");
+            } 
+            else if (totalClicks === 10) {
+                triggerWarning("👮‍♀️", "Illegal maneuver! \nYou are prohibited from clicking NO.");
+            } 
+            else if (totalClicks === 15) {
+                triggerWarning("😉", "Just say yes, make it different now.");
+            } 
+            else if (totalClicks >= 20) {
+                noBtn.style.padding = "5px 10px";
+                noBtn.style.fontSize = "0.6rem";
+                feedback.innerText = "Don't you get tired? 😂";
+            }
+        }
+
+        function triggerWarning(emoji, message) {
+            warnEmoji.innerText = emoji;
+            warnText.innerText = message;
+            warning.style.display = 'flex';
+            setTimeout(() => {
+                warning.style.display = 'none';
+                noBtn.style.left = '50%';
+                noBtn.style.top = '70%';
+            }, 4000);
+        }
+
+        function celebrate() {
+            success.style.display = 'flex';
+            finalMsg.innerText = "💝Clever got you 😄.\n\nThis is the best \"yes\" ever 💝💖\n\nYou are his valentine now 🥰🥰";
+            audio.play().catch(() => {});
+
+            const form = document.getElementById('notifyForm');
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' }
+            });
+        }
+
+        noBtn.addEventListener('mouseover', escape);
+        noBtn.addEventListener('touchstart', escape, { passive: false });
+        yesBtn.addEventListener('click', celebrate);
+        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); celebrate(); });
+    </script>
+</body>
+</html>
