@@ -205,6 +205,104 @@
     </script>
 </body>
 </html>
+            <input type="text" id="userName" placeholder="Type your name here...">
+            <button class="submit-btn" id="confirmName">SUBMIT</button>
+        </div>
+    </div>
+
+    <div id="warning-screen">
+        <div class="big-emoji" id="warnEmoji">👻</div>
+        <p class="warning-text" id="warnText"></p>
+    </div>
+
+    <div id="game-ui">
+        <h1>Do you want to be my Valentine?</h1>
+        <p id="feedback-msg">Make your choice! 😉</p>
+        <div class="buttons-container">
+            <button id="yesBtn">YES</button>
+            <button id="noBtn">NO</button>
+        </div>
+    </div>
+
+    <div id="success-container">
+        <div class="heart"></div>
+        <div class="final-text" id="finalMsg"></div>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const feedback = document.getElementById('feedback-msg');
+        const success = document.getElementById('success-container');
+        const warning = document.getElementById('warning-screen');
+        const namePopup = document.getElementById('name-popup');
+        const finalMsg = document.getElementById('finalMsg');
+        const audio = document.getElementById('bgMusic');
+
+        let totalClicks = 0;
+        let isRunning = false;
+
+        function escape(e) {
+            if(e) e.preventDefault();
+            if (!isRunning) { noBtn.style.position = 'fixed'; isRunning = true; }
+            totalClicks++;
+            const newX = Math.random() * (window.innerWidth - 120) + 60;
+            const newY = Math.random() * (window.innerHeight - 120) + 60;
+            noBtn.style.left = `${newX}px`;
+            noBtn.style.top = `${newY}px`;
+            noBtn.style.transform = 'translate(-50%, -50%)';
+            
+            const funnyWords = ["Nope! 💨", "Too slow! 🏃‍♀️", "Try again! ✨", "Missed me! 😜", "Wrong button! 🚫"];
+            feedback.innerText = funnyWords[totalClicks % funnyWords.length];
+            
+            if (totalClicks === 5) triggerWarning("👻", "I'm not joking, click on yes. Stop messing with me");
+            else if (totalClicks === 10) triggerWarning("👮‍♀️", "Illegal maneuver! You are prohibited from clicking NO.");
+            else if (totalClicks === 15) triggerWarning("😉", "Just say yes, make it different now.");
+        }
+
+        function triggerWarning(emoji, message) {
+            document.getElementById('warnEmoji').innerText = emoji;
+            document.getElementById('warnText').innerText = message;
+            warning.style.display = 'flex';
+            setTimeout(() => { warning.style.display = 'none'; noBtn.style.left = '50%'; noBtn.style.top = '70%'; }, 4000);
+        }
+
+        function startFinalStep() {
+            namePopup.style.display = 'flex';
+        }
+
+        document.getElementById('confirmName').addEventListener('click', () => {
+            const nameValue = document.getElementById('userName').value;
+            if (nameValue.trim() === "") return alert("Please enter your name for the certificate! 😊");
+
+            namePopup.style.display = 'none';
+            document.getElementById('hiddenNameInput').value = nameValue;
+            
+            // Show Success with her name included
+            success.style.display = 'flex';
+            finalMsg.innerText = `💝Clever got you, ${nameValue}! 😄.\n\nThis is the best "yes" ever 💝💖\n\nYou are his valentine now 🥰🥰`;
+            audio.play().catch(() => {});
+
+            // Send Notification to your Email
+            const form = document.getElementById('notifyForm');
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: { 'Accept': 'application/json' }
+            });
+        });
+
+        noBtn.addEventListener('touchstart', escape, { passive: false });
+        noBtn.addEventListener('mouseover', escape);
+        yesBtn.addEventListener('click', startFinalStep);
+        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startFinalStep(); });
+    </script>
+</body>
+</html>
                 triggerWarning("👮‍♀️", "Illegal maneuver! \nYou are prohibited from clicking NO.");
             } 
             else if (totalClicks === 15) {
